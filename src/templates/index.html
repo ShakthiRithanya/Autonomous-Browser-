@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Browser Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Autonomous Browser Agent</h1>
+            <p>Powered by browser-use & Gemini/OpenAI</p>
+        </header>
+        
+        <main>
+            <div class="input-section">
+                <textarea id="taskInput" placeholder="Describe your task here... (e.g., 'Go to google.com and find the weather in Tokyo')"></textarea>
+                <button id="runBtn" onclick="runTask()">Run Task</button>
+            </div>
+            
+            <div class="status-section">
+                <h3>Live Logs</h3>
+                <div id="logs" class="log-console"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let ws;
+        
+        function connect() {
+            ws = new WebSocket("ws://" + window.location.host + "/ws");
+            
+            ws.onmessage = function(event) {
+                const logs = document.getElementById('logs');
+                const p = document.createElement('div');
+                p.textContent = event.data;
+                p.className = 'log-entry';
+                logs.appendChild(p);
+                logs.scrollTop = logs.scrollHeight;
+            };
+            
+            ws.onclose = function() {
+                console.log("Disconnected, retrying...");
+                setTimeout(connect, 1000);
+            };
+        }
+
+        connect();
+
+        function runTask() {
+            const input = document.getElementById('taskInput');
+            const task = input.value;
+            if (!task) return;
+            
+            const logs = document.getElementById('logs');
+            logs.innerHTML = ''; // Clear logs
+            
+            ws.send(task);
+            
+            // UI Feedback
+            const btn = document.getElementById('runBtn');
+            btn.disabled = true;
+            btn.innerText = "Running...";
+            
+            // Re-enable after some time or wait for finish message (logic simplified here)
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerText = "Run Task";
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
